@@ -1,11 +1,13 @@
 import dimod
 import neal
 from .backend import Backend
+from .utils import dimod_extract_best_fit
 
 
 class SimulatedAnnealingBackend(Backend):
     """Finds the exact solutions of a QUBO sampling from a
     Boltzmann Distribution"""
+
     def __init__(self, num_reads):
         super().__init__()
         self.num_reads = num_reads
@@ -13,6 +15,7 @@ class SimulatedAnnealingBackend(Backend):
     def __str__(self):
         return f"<SimulatedAnnealingBackend num_reads={self.num_reads}>"
 
+    @dimod_extract_best_fit
     def solve(self, qubo_matrix):
         # translate the problem to a BQM and create a sampler
         bqm = dimod.BinaryQuadraticModel.from_numpy_matrix(qubo_matrix)

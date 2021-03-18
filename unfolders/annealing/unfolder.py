@@ -3,10 +3,9 @@ from .decimal2binary import BinaryEncoder, laplacian
 
 
 class QUBOUnfolder(object):
-
-    def __init__(self, truth, R, data, n_bits,
-                 weight_regularization=0.0,
-                 weight_systematics=0.0):
+    def __init__(
+        self, truth, R, data, n_bits, weight_regularization=0.0, weight_systematics=0.0
+    ):
         """
         Creates an unfolder based on the minimization of a QUBO function
 
@@ -38,14 +37,15 @@ class QUBOUnfolder(object):
         if not self.R.shape[1] == self.n_bins_truth:
             raise Exception(
                 "Number of bins at truth level do not match between 1D spectrum (%i) and response matrix (%i)"
-                % (self.n_bins_truth, self.R.shape[1]))
+                % (self.n_bins_truth, self.R.shape[1])
+            )
 
         # Tikhonov regularization
         self.D = []
 
         # Systematics
         self.n_syst = 0
-        self.syst_range = 2.  # units of standard deviation
+        self.syst_range = 2.0  # units of standard deviation
         self.syst = []
         self.gamma = weight_systematics
         # Systematics binary encoding
@@ -67,24 +67,24 @@ class QUBOUnfolder(object):
         self.qubo_matrix = self.make_qubo_matrix()
 
     def add_syst_1sigma(self, h_syst: np.array, n_bits=4):
-        '''
+        """
         :param h_syst:      systematic shifts wrt nominal
         :param n_bits:      encoding
         :param syst_range:  range of systematic variation in units of standard deviation
-        '''
+        """
         self.syst.append(np.copy(h_syst))
         self.rho_systs.append(int(n_bits))
         self.n_syst += 1
 
     def convert_to_binary(self):
-        '''
+        """
         auto_encode derives best-guess values for alpha_i and beta_ia
         based on a scaling parameter (e.g. +- 50% ) and the truth signal distribution
-        '''
+        """
 
         ############################################################
         # add systematics (if any)
-        self.rho_systs = np.array(self.rho_systs, dtype='uint')
+        self.rho_systs = np.array(self.rho_systs, dtype="uint")
 
         n_bits_syst = np.sum(self.rho_systs)
         beta_syst = np.zeros([self.n_syst, n_bits_syst])
@@ -101,8 +101,8 @@ class QUBOUnfolder(object):
         for isyst in range(self.n_syst):
             n_bits = self.rho_systs[isyst]
 
-            w = 2.*abs(self.syst_range) / np.power(2, n_bits)
-            #w = abs(self.syst_range) / float(n_bits)
+            w = 2.0 * abs(self.syst_range) / np.power(2, n_bits)
+            # w = abs(self.syst_range) / float(n_bits)
             for j in range(n_bits):
                 a = int(np.sum(self.rho_systs[:isyst]) + j)
                 beta_syst[isyst][a] = w * np.power(2, n_bits - j - 1)
@@ -120,9 +120,11 @@ class QUBOUnfolder(object):
             n_bits_0 = self._encoder.beta.shape[1]
 
             self._encoder.beta = np.block(
-                [[self._encoder.beta,
-                  np.zeros([n_bins, n_bits_syst])],
-                 [np.zeros([self.n_syst, n_bits_0]), beta_syst]])
+                [
+                    [self._encoder.beta, np.zeros([n_bins, n_bits_syst])],
+                    [np.zeros([self.n_syst, n_bits_0]), beta_syst],
+                ]
+            )
         ############################################################
         print("INFO: alpha =", self._encoder.alpha)
         print("INFO: beta =")
@@ -153,15 +155,18 @@ class QUBOUnfolder(object):
 
             # in case Nsyst>0, extend vectors and laplacian
             self.D = np.block(
-                [[self.D, np.zeros([Nbins, Nsyst])],
-                 [np.zeros([Nsyst, Nbins]),
-                  np.zeros([Nsyst, Nsyst])]])
+                [
+                    [self.D, np.zeros([Nbins, Nsyst])],
+                    [np.zeros([Nsyst, Nbins]), np.zeros([Nsyst, Nsyst])],
+                ]
+            )
 
             self.S = np.block(
-                [[np.zeros([Nbins, Nbins]),
-                  np.zeros([Nbins, Nsyst])],
-                 [np.zeros([Nsyst, Nbins]),
-                  np.eye(Nsyst)]])
+                [
+                    [np.zeros([Nbins, Nbins]), np.zeros([Nbins, Nsyst])],
+                    [np.zeros([Nsyst, Nbins]), np.eye(Nsyst)],
+                ]
+            )
 
             print("INFO: systematics penalty matrix:")
             print(self.S)
@@ -178,25 +183,29 @@ class QUBOUnfolder(object):
         D = self.D
         S = self.S
 
-        W = np.einsum('ij,ik', R, R) + \
-            self.lmbd*np.einsum('ij,ik', D, D) + \
-            self.gamma*np.einsum('ij,ik', S, S)
+        W = (
+            np.einsum("ij,ik", R, R)
+            + self.lmbd * np.einsum("ij,ik", D, D)
+            + self.gamma * np.einsum("ij,ik", S, S)
+        )
         print("DEBUG: W_ij =")
         print(W)
 
         # Using Einstein notation
 
         # quadratic constraints
-        Qq = 2 * np.einsum('jk,ja,kb->ab', W, beta, beta)
+        Qq = 2 * np.einsum("jk,ja,kb->ab", W, beta, beta)
         Qq = np.triu(Qq)
-        np.fill_diagonal(Qq, 0.)
+        np.fill_diagonal(Qq, 0.0)
         print("DEBUG: quadratic coeff Qq =")
         print(Qq)
 
         # linear constraints
-        Ql = 2*np.einsum('jk,k,ja->a', W, alpha, beta) + \
-            np.einsum('jk,ja,ka->a', W, beta, beta) - \
-            2*np.einsum('ij,i,ja->a', R, d, beta)
+        Ql = (
+            2 * np.einsum("jk,k,ja->a", W, alpha, beta)
+            + np.einsum("jk,ja,ka->a", W, beta, beta)
+            - 2 * np.einsum("ij,i,ja->a", R, d, beta)
+        )
         Ql = np.diag(Ql)
         print("DEBUG: linear coeff Ql =")
         print(Ql)
@@ -210,17 +219,7 @@ class QUBOUnfolder(object):
 
         return Q
 
-    def solve(self, backend, raw_results=False):
-        Q = self.qubo_matrix
-        # print("INFO: solving the QUBO model (size=%i)..." % len(self._bqm))
-        results = backend.solve(Q)
-        # decode the results if required
-        if not raw_results:
-            # get the best solution (i.e. the one with the lowest energy)
-            best_fit = results.first
-            # decode
-            q = np.array(list(best_fit.sample.values()))
-            results = self._encoder.decode(q)
-
-        # return the results
-        return results
+    def solve(self, backend):
+        result = backend.solve(self.qubo_matrix)
+        # return the decoded solution
+        return self._encoder.decode(result)
