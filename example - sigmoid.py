@@ -89,7 +89,7 @@ def main(n_bins, bits, sigmoid_smoothness=2, gaussian_sigma=2, lambda_factor=0):
     unfolder_annealing = QUBOUnfolder(
         z_ini, r, z_folded, n_bits=bits, weight_regularization=lambda_factor
     )
-    annealer = backends.SimulatedAnnealingBackend(5000)
+    annealer = backends.SimulatedAnnealingBackend(1000)
     plt.scatter(
         x,
         unfolder_annealing.solve(annealer),
