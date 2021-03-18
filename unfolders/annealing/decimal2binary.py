@@ -4,9 +4,11 @@ import random as rnd
 
 def laplacian(n):
 
-    lap = np.diag(2*np.ones(n)) + \
-        np.diag(-1*np.ones(n-1), 1) + \
-        np.diag(-1*np.ones(n-1), -1)
+    lap = (
+        np.diag(2 * np.ones(n))
+        + np.diag(-1 * np.ones(n - 1), 1)
+        + np.diag(-1 * np.ones(n - 1), -1)
+    )
 
     return lap
 
@@ -34,7 +36,7 @@ def discretize_vector(x, encoding=[]):
 def binary_matmul(A, x):
 
     n = x.shape[0]
-    y = np.zeros(n, dtype='uint8')
+    y = np.zeros(n, dtype="uint8")
 
     for i in range(n - 1, -1, -1):
         c = 0
@@ -54,7 +56,7 @@ def compact_vector(q, encoding=[]):
         N = q.shape[0] // n
         encoding = np.array([n] * N)
 
-    x = np.zeros(N, dtype='uint8')
+    x = np.zeros(N, dtype="uint8")
     for i in range(N):
         for j in range(n):
             p = np.power(2, n - j - 1)
@@ -79,22 +81,21 @@ def discretize_matrix(A, encoding=[]):
     D = np.zeros([N, M * n])
 
     for i in range(M):
-        for j in range(n):  #-->bits
+        for j in range(n):  # -->bits
             k = (i) * n + j
             D[:, k] = np.power(2, n - j - 1) * A[:, i]
     return D
 
 
 def d2b(a, n_bits=8):
-    '''Convert a list or a list of lists to binary representation
-    '''
-    A = np.array(a, dtype='uint8')
+    """Convert a list or a list of lists to binary representation"""
+    A = np.array(a, dtype="uint8")
 
     n_cols = A.shape[0]
 
     n_vectors = n_cols * n_bits
 
-    R_b = np.zeros([n_vectors, n_vectors], dtype='uint8')
+    R_b = np.zeros([n_vectors, n_vectors], dtype="uint8")
     # up to here, it seems that every entry of the matrix will be encoded with 8 bits as the
     # dimension of R_b is (n_vectors X n_vectors)
 
@@ -107,11 +108,11 @@ def d2b(a, n_bits=8):
     # By iteration, we can convert R from decimal to binary
 
     for i in range(n_vectors):
-        v_bin = np.zeros(n_vectors, dtype='uint8')
+        v_bin = np.zeros(n_vectors, dtype="uint8")
         v_bin[i] = 1
         # print(v_bin)
 
-        #v_dec = np.packbits(v_bin)
+        # v_dec = np.packbits(v_bin)
         # we are passing to compact_vector:
         # - v_bin:  the basis vector. i.e. ( 1, 0, ..., 0 ) for i=0
         # - n_bits: the amount of bits per entry
@@ -119,7 +120,7 @@ def d2b(a, n_bits=8):
         # print(x_dec)
 
         u_dec = np.dot(A, v_dec)
-        #u_bin = np.unpackbits(u_dec)
+        # u_bin = np.unpackbits(u_dec)
         u_bin = discretize_vector(u_dec, n_bits)
 
         R_b[:, i] = u_bin
@@ -131,7 +132,6 @@ def d2b(a, n_bits=8):
 
 
 class BinaryEncoder(object):
-
     def __init__(self, rho, auto_scaling, alpha=None, beta=None):
         """
         Creates a decimal to binary encoder
@@ -157,27 +157,27 @@ class BinaryEncoder(object):
     def set_rho(self, rho: np.array):
         self.rho = np.copy(rho)
 
-
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def encode(self, x):
-        '''
+        """
         :param alpha: offeset
         :param beta: scaling
         :param rho: n-bits encoding
         :param x: vector in base-10
         :return: Returns binary-encoded vector
-        '''
+        """
         from decimal import Decimal
+
         # number of bins/entries
         N = len(x)
-        np.savez("test_encoding", x=x, a=self.alpha, b=self.beta)
+        # np.savez("test_encoding", x=x, a=self.alpha, b=self.beta)
         # l = np.load("test_encoding.npz")
         # x,alpha,beta = l['x'], l['a'],l['b']
 
         n_bits_total = int(sum(self.rho))
         # x_b(inary) will store the result
-        x_b = np.zeros(n_bits_total, dtype='uint')
+        x_b = np.zeros(n_bits_total, dtype="uint")
         print(f"Encoding: {x}")
         # in the loop, x[i] is the entry to encode
         for i in range(N - 1, -1, -1):
@@ -203,7 +203,7 @@ class BinaryEncoder(object):
 
                 print(f"more_than = {more_than}")
                 print(f"equal_to = {equal_to}")
-                # set the bit in the encoded 
+                # set the bit in the encoded
                 x_b[a] = min([1, more_than or equal_to])
 
                 x_d = x_d - x_b[a] * self.beta[i][a]
@@ -218,15 +218,15 @@ class BinaryEncoder(object):
 
         return x_b
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def auto_encode(self, x):
-        ''' 
+        """
         if range is [ x*(1-h), x*(1+h)], e.g. x +- 50%
         alpha = x*(1-h) = lowest possible value
         width = x*(1+h) - x*(1-h) = x + hx -x + hx = 2hx
         then divide the range in n steps
-        '''
+        """
         auto_range = self.auto_scaling
         # rho is the number of bits
         N = len(self.rho)
@@ -242,8 +242,8 @@ class BinaryEncoder(object):
             #    zeros = [0, 0, 0, 0, ...]
             # result in:
             #    alpha + beta.*zeros = alpha
-            self.alpha[i] = (1. - auto_range) * x[i]
-            #w = 2 * auto_range*x[i] / float(n)
+            self.alpha[i] = (1.0 - auto_range) * x[i]
+            # w = 2 * auto_range*x[i] / float(n)
             # w is the width?
             w = 2 * auto_range * x[i] / np.power(2, n)
 
@@ -255,16 +255,16 @@ class BinaryEncoder(object):
 
         return x_b
 
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def decode(self, x_b):
-        '''
+        """
         :param alpha: offeset (vector)
         :param beta: scaling (array)
         :param rho: n-bits encoding (vector)
         :param x: binary vector
         :return: Returns decoded vector
-        '''
+        """
 
         N = len(self.alpha)
         x = np.zeros(N)
