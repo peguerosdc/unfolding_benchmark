@@ -6,7 +6,7 @@ from unfolders.annealing import QUBOUnfolder, backends
 
 # utils
 import matplotlib.pyplot as plt
-import traceback
+import sys, logging
 from utils import convolution_matrix
 
 # numpy
@@ -111,4 +111,10 @@ def main(n_bins, bits, sigmoid_smoothness=2, gaussian_sigma=2, lambda_factor=0):
 
 
 if __name__ == "__main__":
-    main(n_bins=10, bits=4, sigmoid_smoothness=2)
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.basicConfig(
+        stream=sys.stdout,
+        format="[%(name)s] %(levelname)s: %(message)s",
+        level=logging.DEBUG,
+    )
+    main(n_bins=5, bits=4, sigmoid_smoothness=2)
