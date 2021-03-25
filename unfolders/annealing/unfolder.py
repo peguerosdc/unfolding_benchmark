@@ -42,7 +42,8 @@ class QUBOUnfolder(object):
         ----------
         truth : numpy.array
             True distribution. This represents what the bins look like without
-            the effects of the detector
+            the effects of the detector. This param is only used to get the amount
+            of bins
         R : numpy.array
             Response matrix. This represents what the detector does to the data
         data : numpy.array
@@ -60,21 +61,19 @@ class QUBOUnfolder(object):
         """
 
         # Store the data
-        self.x = truth
         self.R = R
         self.data = data
-        # Store penalty weight for Tikhonov regularization
-        self.lmbd = weight_regularization
         # validate the amount of bins in the truth distribution
-        self.n_bins_truth = self.x.shape[0]
+        self.n_bins_truth = truth.shape[0]
         if not self.R.shape[1] == self.n_bins_truth:
             raise ValueError(
                 "Number of bins at truth level do not match between 1D spectrum (%i) and response matrix (%i)"
                 % (self.n_bins_truth, self.R.shape[1])
             )
 
-        # Tikhonov regularization
+        # Tikhonov regularization and its penalty weight
         self.D = []
+        self.lmbd = weight_regularization
 
         # Systematics
         self.syst_range = syst_range
@@ -88,10 +87,11 @@ class QUBOUnfolder(object):
 
         # if encoding is still a int number, change it to
         # an array of Nbits per bin
-        if isinstance(n_bits, int):
-            N = self.x.shape[0]
-            n_bits = np.array([n_bits] * N)
-        self.rho = n_bits
+        self.rho = (
+            np.array([n_bits] * self.n_bins_truth)
+            if isinstance(n_bits, int)
+            else n_bits
+        )
         # binary encoding
         self._encoder = BinaryEncoder(self.rho, auto_scaling=0.5)
         self._encoder.auto_encode(truth)
