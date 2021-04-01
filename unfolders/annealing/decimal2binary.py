@@ -101,29 +101,30 @@ class BinaryEncoder(object):
                 f"  - x_d = x[{i}] - alpha[{i}] = {x[i]} - {self.alpha[i]} = {x_d}"
             )
             logger.debug(f"  - Beta = {self.beta[i]}")
-            # get the value of each bit
-            for j in range(0, n, 1):
-                # "a" is the index of the bit currently encoding in the
-                # final array
-                a = int(np.sum(self.rho[:i]) + j)
-                beta = self.beta[i][a]
-                more_than = Decimal(x_d) // Decimal(beta)
-                equal_to = np.isclose(x_d, beta)
+            # get the value of each bit if there is a value!=0 to encode
+            if x_d != 0:
+                for j in range(0, n, 1):
+                    # "a" is the index of the bit currently encoding in the
+                    # final array
+                    a = int(np.sum(self.rho[:i]) + j)
+                    beta = self.beta[i][a]
+                    more_than = Decimal(x_d) // Decimal(beta)
+                    equal_to = np.isclose(x_d, beta)
 
-                # set the bit in the encoded
-                x_b[a] = min([1, more_than or equal_to])
-                x_d = x_d - x_b[a] * self.beta[i][a]
-                logger.debug(
-                    f"    - Bit {a}: x_d={x_d} encoded to {x_b[a]}. Rest = {x_d}"
-                )
+                    # set the bit in the encoded
+                    x_b[a] = min([1, more_than or equal_to])
+                    x_d = x_d - x_b[a] * self.beta[i][a]
+                    logger.debug(
+                        f"    - Bit {a}: x_d={x_d} encoded to {x_b[a]}. Rest = {x_d}"
+                    )
 
-                # when the value can be encoded exactly, stop looking.
-                # this is a workaround to prevent comparing small numbers in
-                # np.isclose, but an appropiate atol shouldb e set to
-                # handle this case. see:
-                # https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
-                if equal_to:
-                    break
+                    # when the value can be encoded exactly, stop looking.
+                    # this is a workaround to prevent comparing small numbers in
+                    # np.isclose, but an appropiate atol shouldb e set to
+                    # handle this case. see:
+                    # https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
+                    if equal_to:
+                        break
 
         logger.debug(f"Encoded: {x_b}")
         return x_b
