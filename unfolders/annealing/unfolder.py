@@ -236,3 +236,21 @@ class QUBOUnfolder(object):
         result = backend.solve(self.qubo_matrix)
         # return the decoded solution
         return self._encoder.decode(result)
+
+    def compute_energy(self, x):
+        """
+        Returns the energy of a given state x for this problem (without considering systematics)
+        in the shape: (likelihood_energy, regularization_energy).
+        The total energy is just (eq 2.3): likelihood_energy + regularization_energy
+
+        Parameters
+        ----------
+        x : numpy.array
+            State to compute its energy
+        """
+        print("WARNING: systematics are not considered (yet) in this calculation")
+        logger.debug("Computing with the L2 norm: |Rx-d|² + lambda*|Dx|²")
+        return (
+            np.linalg.norm(self.R.dot(x) - self.data) ** 2,
+            self.lmbd * np.linalg.norm(self.D.dot(x)) ** 2,
+        )
