@@ -1,10 +1,10 @@
 import dimod
 import neal
-from .backend import Backend
+from .annealer import Annealer
 from .utils import dimod_extract_best_fit
 
 
-class SimulatedAnnealingBackend(Backend):
+class SimulatedAnnealer(Annealer):
     """Finds the exact solutions of a QUBO sampling from a
     Boltzmann Distribution"""
 

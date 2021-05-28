@@ -1,5 +1,8 @@
+from ..backend import Backend
+from ..result import UnfoldingResult
 import numpy as np
 from .decimal2binary import BinaryEncoder, laplacian
+from . import stats as annealing_stats
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,16 +22,13 @@ class QUBOSystematics:
         self.n_bits = n_bits
 
 
-class QUBOUnfolder(object):
+class AnnealingBackend(Backend):
     """
     QUBO Data Unfolder based (after some refactoring) on https://github.com/rdisipio/quantum_unfolding
     """
 
     def __init__(
         self,
-        truth,
-        R,
-        data,
         n_bits,
         weight_regularization=0.0,
         systematics=[],
@@ -40,14 +40,6 @@ class QUBOUnfolder(object):
 
         Parameters
         ----------
-        truth : numpy.array
-            True distribution. This represents what the bins look like without
-            the effects of the detector. This param is only used to get the amount
-            of bins
-        R : numpy.array
-            Response matrix. This represents what the detector does to the data
-        data : numpy.array
-            This is the data/distribution to be unfolded.
         n_bits : int or np.array
             Amount of bits to encode each bin
         weight_regularization : float
@@ -59,21 +51,10 @@ class QUBOUnfolder(object):
         syst_range : float
             Systematics range in units of standard deviation
         """
-
-        # Store the data
-        self.R = R
-        self.data = data
-        # validate the amount of bins in the truth distribution
-        self.n_bins_truth = truth.shape[0]
-        if not self.R.shape[1] == self.n_bins_truth:
-            raise ValueError(
-                "Number of bins at truth level do not match between 1D spectrum (%i) and response matrix (%i)"
-                % (self.n_bins_truth, self.R.shape[1])
-            )
-
         # Tikhonov regularization and its penalty weight
         self.D = []
         self.lmbd = weight_regularization
+        self.n_bits = n_bits
 
         # Systematics
         self.syst_range = syst_range
@@ -84,22 +65,6 @@ class QUBOUnfolder(object):
         for syst in systematics:
             self.syst.append(np.copy(syst.h_syst))
             self.rho_systs.append(int(syst.n_bits))
-
-        # if encoding is still a int number, change it to
-        # an array of Nbits per bin
-        self.rho = (
-            np.array([n_bits] * self.n_bins_truth)
-            if isinstance(n_bits, int)
-            else n_bits
-        )
-        # binary encoding
-        self._encoder = BinaryEncoder(self.rho, auto_scaling=0.5)
-        self._encoder.auto_encode(truth)
-
-        # convert the problem into a binary problem
-        self._add_systematics_to_problem()
-        # make QUBO matrix
-        self.qubo_matrix = self._make_qubo_matrix()
 
     def _add_systematics_to_problem(self):
         """
@@ -149,15 +114,15 @@ class QUBOUnfolder(object):
         logger.debug(f"Alpha matrix = {self._encoder.alpha}")
         logger.debug(f"Beta matrix = \n{self._encoder.beta}")
 
-    def _make_qubo_matrix(self):
+    def _make_qubo_matrix(self, data, xini, bini, R):
 
-        Nbins = self.n_bins_truth
+        nbins = xini.shape[0]
 
         # regularization (Laplacian matrix)
-        self.D = laplacian(self.n_bins_truth)
+        self.D = laplacian(nbins)
 
         # include systematics (if any)
-        self.S = np.zeros([Nbins, Nbins])
+        self.S = np.zeros([nbins, nbins])
         Nsyst = len(self.rho_systs)
         if Nsyst > 0:
             # matrix of systematic shifts
@@ -166,22 +131,22 @@ class QUBOUnfolder(object):
             logger.debug(T)
 
             # update response uber-matrix
-            self.R = np.block([self.R, T])
+            R = np.block([R, T])
             logger.debug("Response uber-matrix:")
-            logger.debug(self.R)
+            logger.debug(R)
 
             # in case Nsyst>0, extend vectors and laplacian
             self.D = np.block(
                 [
-                    [self.D, np.zeros([Nbins, Nsyst])],
-                    [np.zeros([Nsyst, Nbins]), np.zeros([Nsyst, Nsyst])],
+                    [self.D, np.zeros([nbins, Nsyst])],
+                    [np.zeros([Nsyst, nbins]), np.zeros([Nsyst, Nsyst])],
                 ]
             )
 
             self.S = np.block(
                 [
-                    [np.zeros([Nbins, Nbins]), np.zeros([Nbins, Nsyst])],
-                    [np.zeros([Nsyst, Nbins]), np.eye(Nsyst)],
+                    [np.zeros([nbins, nbins]), np.zeros([nbins, Nsyst])],
+                    [np.zeros([Nsyst, nbins]), np.eye(Nsyst)],
                 ]
             )
 
@@ -194,10 +159,9 @@ class QUBOUnfolder(object):
         )
 
         # From now on, we will be using Einstein notation
-        d = self.data
+        d = data
         alpha = self._encoder.alpha
         beta = self._encoder.beta
-        R = self.R
         D = self.D
         S = self.S
 
@@ -232,10 +196,36 @@ class QUBOUnfolder(object):
 
         return Q
 
-    def solve(self, backend):
-        result = backend.solve(self.qubo_matrix)
+    def solve(self, data, statcov, xini, bini, R):
+        # validate the amount of bins in the truth distribution
+        n_bins_truth = xini.shape[0]
+        # if encoding is still a int number, change it to
+        # an array of Nbits per bin
+        self.rho = (
+            np.array([self.n_bits] * n_bins_truth)
+            if isinstance(self.n_bits, int)
+            else self.n_bits
+        )
+        # binary encoding
+        self._encoder = BinaryEncoder(self.rho, auto_scaling=0.5)
+        self._encoder.auto_encode(xini)
+        self._add_systematics_to_problem()
+        # make QUBO matrix
+        self.qubo_matrix = self._make_qubo_matrix(data, xini, bini, R)
         # return the decoded solution
-        return self._encoder.decode(result)
+        result = self.get_annealer().solve(self.qubo_matrix)
+        # Compute the error
+        print(f"Nbits: {self.n_bits} and weight: {self.lmbd}")
+        unfolded_covariance = annealing_stats.covariance_matrix_of_result(
+            R, self.lmbd, statcov
+        )
+        error = np.sqrt(unfolded_covariance.diagonal())
+        return UnfoldingResult(self._encoder.decode(result), error)
+
+    def get_annealer(self):
+        raise NotImplementedError(
+            "This instance should be either a SimulatedAnnealing or SimulatedQuantumAnnealing"
+        )
 
     def compute_energy(self, x):
         """

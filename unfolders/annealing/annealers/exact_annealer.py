@@ -1,9 +1,9 @@
 import dimod
-from .backend import Backend
+from .annealer import Annealer
 from .utils import dimod_extract_best_fit
 
 
-class ExactBackend(Backend):
+class ExactAnnealer(Annealer):
     """Finds the exact solutions of a QUBO using dimod.ExactSolver"""
 
     def __str__(self):

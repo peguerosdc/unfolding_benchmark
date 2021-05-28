@@ -1,17 +1,24 @@
 import dimod
 from dwave.system import FixedEmbeddingComposite
+from dwave_qbsolv import QBSolv
 from ..utils import dimod_extract_best_fit
 
 
-class DirectBackend:
+class QBAnnealer:
+    """
+    Solver params accepted by this solver are:
+        - num_repeats
+        - solver_limit
+    """
+
     @dimod_extract_best_fit
     def solve(self, qubo_matrix):
-        # find the best minor embedding for this problem
-        print(f"Finding optimal minor embedding for {self.topology} topology ")
-        # Solve
+        # find embedding of subproblem-sized complete graph to the QPU
         bqm = dimod.BinaryQuadraticModel.from_numpy_matrix(qubo_matrix)
         edges_list = bqm.to_qubo()[0]
         embedding = self.get_best_embedding(edges_list)
         # create a sampler with the best embedding found
         sampler = FixedEmbeddingComposite(self.hardware_sampler, embedding)
-        return sampler.sample(bqm, **self.solver_parameters).aggregate()
+        return QBSolv().sample_qubo(
+            edges_list, solver=sampler, **self.solver_parameters
+        )

@@ -1,10 +1,12 @@
 class Unfolder(object):
-    def __init__(self, data, xini, bini, R):
+    def __init__(self, data, statcov, xini, bini, R):
         """
         Parameters
         ----------
         data :
             This is the data/histogram to be unfolded
+        data :
+            This is the covariance matrix of the data
         xini :
             This is how an unfolded histogram looks like (without the effects
             of the detector)
@@ -15,6 +17,7 @@ class Unfolder(object):
         """
         # save the variables to use them later
         self.data = data
+        self.statcov = statcov
         self.xini = xini
         self.bini = bini
         self.R = R
@@ -29,4 +32,4 @@ class Unfolder(object):
         backend : Backend
             A Backend instance capable of performing the unfolding
         """
-        return backend.solve(self.data, self.xini, self.bini, self.R)
+        return backend.solve(self.data, self.statcov, self.xini, self.bini, self.R)

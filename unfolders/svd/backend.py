@@ -22,7 +22,7 @@ class SVDBackend(Backend):
         self.bins_min = bins_min
         self.bins_max = bins_max
 
-    def solve(self, data, xini, bini, R):
+    def solve(self, data, statcov, xini, bini, R):
         bins_min = self.bins_min
         bins_max = self.bins_max
         # Transform python arrays to ROOT TH1D
@@ -45,7 +45,7 @@ class SVDBackend(Backend):
         root_numpy.array2hist(R, Adet)
         # Compute covariance matrix assuming the amount of events in each bin
         # come from a Poisson distribution
-        statcov = ROOT.TH2D(
+        statcovr = ROOT.TH2D(
             "statcov",
             "statcov",
             data.shape[0],
@@ -55,10 +55,9 @@ class SVDBackend(Backend):
             bins_min,
             bins_max,
         )
-        for i in range(1, datar.GetNbinsX()):
-            statcov.SetBinContent(i, i, datar.GetBinError(i) * datar.GetBinError(i))
+        root_numpy.array2hist(statcov, statcovr)
         # Create TSVDUnfold object and initialise
-        tsvdunf = ROOT.TSVDUnfold(datar, statcov, binir, xinir, Adet)
+        tsvdunf = ROOT.TSVDUnfold(datar, statcovr, binir, xinir, Adet)
         # It is possible to normalise unfolded spectrum to unit area
         tsvdunf.SetNormalize(ROOT.kFALSE)
         # Perform the unfolding with regularisation parameter kreg = self.kreg
@@ -74,7 +73,7 @@ class SVDBackend(Backend):
         # using the measured covariance matrix as input to generate the toys
         # 100 toys should usually be enough
         # The same method can be used for different covariance matrices separately.
-        ustatcov = tsvdunf.GetUnfoldCovMatrix(statcov, 100)
+        ustatcov = tsvdunf.GetUnfoldCovMatrix(statcovr, 100)
         # Now compute the error matrix on the unfolded distribution originating
         # from the finite detector matrix statistics
         uadetcov = tsvdunf.GetAdetCovMatrix(100)

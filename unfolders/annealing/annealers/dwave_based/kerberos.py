@@ -3,7 +3,7 @@ from hybrid.reference.kerberos import KerberosSampler
 from ..utils import dimod_extract_best_fit
 
 
-class KerberosBackend:
+class KerberosAnnealer:
     """
     Solver params accepted by this solver are:
         - max_iter

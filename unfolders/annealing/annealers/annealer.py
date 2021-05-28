@@ -1,6 +1,6 @@
+class Annealer:
+    """Annealer to solve a QUBO"""
 
-class Backend:
-    """Backend to solve a QUBO"""
     def __init__(self, solver_parameters={}):
         """Create a backend with some solver_parameters
 

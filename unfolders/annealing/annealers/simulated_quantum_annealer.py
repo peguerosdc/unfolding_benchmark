@@ -1,9 +1,9 @@
 import sqaod as sq
 from sqaod import algorithm as algo
-from .backend import Backend
+from .annealer import Annealer
 
 
-class SimulatedQuantumAnnealingBackend(Backend):
+class SimulatedQuantumAnnealer(Annealer):
     """Finds the exact solutions of a QUBO sampling from a
     Quantum Distribution obtained via a Path-Integral approach"""
 
@@ -34,7 +34,7 @@ class SimulatedQuantumAnnealingBackend(Backend):
         self.tau = tau
 
     def __str__(self):
-        return f"<SimulatedQuantumAnnealingBackend trotters={self.trotters}>"
+        return f"<SimulatedQuantumAnnealer trotters={self.trotters}>"
 
     def solve(self, qubo_matrix):
         # choose the solver

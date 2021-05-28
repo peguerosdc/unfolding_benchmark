@@ -1,16 +1,13 @@
 from braket.ocean_plugin import BraketDWaveSampler
-from .dwave_base_backend import DWaveBaseBackend
+from .dwave_base_annealer import DWaveBaseAnnealer
 
 
-class AWSBackend(DWaveBaseBackend):
-
-    def __init__(self, s3_bucket, s3_bucket_folder,
-                 topology, solver_parameters={}):
+class AWSAnnealer(DWaveBaseAnnealer):
+    def __init__(self, s3_bucket, s3_bucket_folder, topology, solver_parameters={}):
         # Validate the S3 bucket and its folder are passed
         if s3_bucket is None or s3_bucket_folder is None:
             raise ValueError(
-                "To use an AWS backend, s3_bucket and s3_bucket_folder "
-                "are required"
+                "To use an AWS Annealer, s3_bucket and s3_bucket_folder " "are required"
             )
         # Store them for further use
         self.s3_folder = (s3_bucket, s3_bucket_folder)

@@ -1,10 +1,14 @@
 # Utilities
 from examples import example
 from utils import root_utils
+import numpy as np
 
 # Unfolding libraries
 from unfolders.unfolder import Unfolder
-from unfolders.svd.backend import SVDBackend
+from unfolders.annealing import (
+    SimulatedAnnealingBackend,
+    SimulatedQuantumAnnealingBackend,
+)
 
 # Plotting libraries
 import pylab as plt
@@ -25,10 +29,12 @@ datatrue, _ = root_utils.histogram_to_python(datatrue)
 R, _ = root_utils.histogram_to_python(Adet)
 
 # Define backend
-backend = SVDBackend(13, -10, 10)
+backend = SimulatedQuantumAnnealingBackend(4, 50, weight_regularization=1)
 
+# Turn Adetpy from number of events to probabilities (to use it with quantum annealing)
+R_probabilities = np.true_divide(R, xini, where=xini != 0)
 # Perform unfolding
-unfolder = Unfolder(data, statcov, xini, bini, R)
+unfolder = Unfolder(data, statcov, datatrue + 1, bini, R_probabilities)
 result = unfolder.unfold(backend)
 
 # Plot the result
@@ -47,5 +53,5 @@ plt.errorbar(
     label="Unfolded Data",
 )
 plt.legend(prop={"size": 13})
-plt.title("SVD Example")
+plt.title("Annealing Example")
 plt.show()
