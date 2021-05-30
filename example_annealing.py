@@ -1,6 +1,6 @@
 # Utilities
 from examples import example
-from utils import root_utils
+from unfolders.utils import root as root_utils
 import numpy as np
 
 # Unfolding libraries

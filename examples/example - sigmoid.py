@@ -7,7 +7,7 @@ from unfolders.annealing import QUBOUnfolder, backends
 # utils
 import matplotlib.pyplot as plt
 import sys, logging
-from utils import convolution_matrix
+from .utils import convolution_matrix
 
 # numpy
 import numpy as np

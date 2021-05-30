@@ -1,11 +1,11 @@
 # Utilities
 from examples import example
-from utils import root_utils
+from unfolders.utils import root as root_utils
 import numpy as np
 
 # Unfolding libraries
 from unfolders.unfolder import Unfolder
-from unfolders.svd.backend import SVDBackend
+from unfolders.svd import SVDBackend
 
 # Plotting libraries
 import pylab as plt
