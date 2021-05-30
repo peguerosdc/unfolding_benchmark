@@ -16,23 +16,24 @@ import pylab as plt
 # toy generation
 nbins = 40
 # Generate initial distribution and response matrix
-xini, binir, Adet = example.maker.generate_initial_samples(nbins)
+xini, bini, Adet = example.maker.generate_initial_samples(nbins)
 # Generate test distribution (what is measured in the experiment)
 datatrue, data, statcov = example.maker.generate_test_samples(nbins)
 
 # Convert everything into python objects
 xini, xini_edges = root_utils.histogram_to_python(xini)
-bini, _ = root_utils.histogram_to_python(binir)
+bini, _ = root_utils.histogram_to_python(bini)
 data, _ = root_utils.histogram_to_python(data)
 statcov, _ = root_utils.histogram_to_python(statcov)
 datatrue, _ = root_utils.histogram_to_python(datatrue)
 R, _ = root_utils.histogram_to_python(Adet)
+R_probabilities = np.true_divide(R, xini, where=xini != 0)
 
 # Define backend
 backend = SimulatedQuantumAnnealingBackend(4, 50, weight_regularization=1)
 
 # Turn Adetpy from number of events to probabilities (to use it with quantum annealing)
-R_probabilities = np.true_divide(R, xini, where=xini != 0)
+
 # Perform unfolding
 unfolder = Unfolder(data, statcov, datatrue + 1, bini, R_probabilities)
 result = unfolder.unfold(backend)

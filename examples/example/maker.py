@@ -4,6 +4,9 @@ import ROOT
 # Random number generator
 R = ROOT.TRandom3()
 
+bins_min = -10
+bins_max = 10
+
 
 def reconstruct(xt):
     """
@@ -27,10 +30,17 @@ def generate_initial_samples(nbins, amount=100000):
     Returns: xini, bini, Adet
     """
     # create ROOT objects
-    xini = ROOT.TH1D("xini", "MC truth", nbins, -10, 10)
-    bini = ROOT.TH1D("bini", "MC reco", nbins, -10, 10)
+    xini = ROOT.TH1D("xini", "MC truth", nbins, bins_min, bins_max)
+    bini = ROOT.TH1D("bini", "MC reco", nbins, bins_min, bins_max)
     Adet = ROOT.TH2D(
-        "Adet", "detector response", nbins, -10.0, 10.0, nbins, -10.0, 10.0
+        "Adet",
+        "detector response",
+        nbins,
+        bins_min,
+        bins_max,
+        nbins,
+        bins_min,
+        bins_max,
     )
     # Fill the MC using a Breit-Wigner with mean=0.3 and width=2.5.
     for i in range(amount):
@@ -56,10 +66,17 @@ def generate_test_samples(nbins, amount=10000):
     (data) assuming they come from a Poisson distribution
     """
     # create ROOT objects
-    datatrue = ROOT.TH1D("datatrue", "data truth", nbins, -10.0, 10.0)
-    data = ROOT.TH1D("data", "data", nbins, -10.0, 10.0)
+    datatrue = ROOT.TH1D("datatrue", "data truth", nbins, bins_min, bins_max)
+    data = ROOT.TH1D("data", "data", nbins, bins_min, bins_max)
     statcov = ROOT.TH2D(
-        "statcov", "covariance matrix", nbins, -10.0, 10.0, nbins, -10.0, 10.0
+        "statcov",
+        "covariance matrix",
+        nbins,
+        bins_min,
+        bins_max,
+        nbins,
+        bins_min,
+        bins_max,
     )
     # Fill the "data" using a Gaussian with mean=0 and width=2
     for i in range(amount):

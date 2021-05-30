@@ -1,6 +1,7 @@
 # Utilities
 from examples import example
 from utils import root_utils
+import numpy as np
 
 # Unfolding libraries
 from unfolders.unfolder import Unfolder
@@ -12,23 +13,24 @@ import pylab as plt
 # toy generation
 nbins = 40
 # Generate initial distribution and response matrix
-xini, binir, Adet = example.maker.generate_initial_samples(nbins)
+xini, bini, Adet = example.maker.generate_initial_samples(nbins)
 # Generate test distribution (what is measured in the experiment)
 datatrue, data, statcov = example.maker.generate_test_samples(nbins)
 
 # Convert everything into python objects
 xini, xini_edges = root_utils.histogram_to_python(xini)
-bini, _ = root_utils.histogram_to_python(binir)
+bini, _ = root_utils.histogram_to_python(bini)
 data, _ = root_utils.histogram_to_python(data)
 statcov, _ = root_utils.histogram_to_python(statcov)
 datatrue, _ = root_utils.histogram_to_python(datatrue)
 R, _ = root_utils.histogram_to_python(Adet)
+R_probabilities = np.true_divide(R, xini, where=xini != 0)
 
 # Define backend
-backend = SVDBackend(13, -10, 10)
+backend = SVDBackend(13, example.maker.bins_min, example.maker.bins_max)
 
 # Perform unfolding
-unfolder = Unfolder(data, statcov, xini, bini, R)
+unfolder = Unfolder(data, statcov, xini, bini, R_probabilities)
 result = unfolder.unfold(backend)
 
 # Plot the result

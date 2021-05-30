@@ -25,6 +25,8 @@ class SVDBackend(Backend):
     def solve(self, data, statcov, xini, bini, R):
         bins_min = self.bins_min
         bins_max = self.bins_max
+        # Transform the reponse matrix from probabilities to events
+        R = np.multiply(xini, R, where=xini != 0)
         # Transform python arrays to ROOT TH1D
         datar = ROOT.TH1D("data", "data", data.shape[0], bins_min, bins_max)
         root_numpy.array2hist(data, datar)

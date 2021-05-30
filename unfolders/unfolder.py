@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Unfolder(object):
     def __init__(self, data, statcov, xini, bini, R):
         """
@@ -5,16 +8,22 @@ class Unfolder(object):
         ----------
         data :
             This is the data/histogram to be unfolded
-        data :
+        statcov :
             This is the covariance matrix of the data
         xini :
-            This is how an unfolded histogram looks like (without the effects
+            This is how an unfolded histogram is supposed to look
+            like (i.e. a simulation of "data" without the effects
             of the detector)
         bini :
             This is how xini looks like with the effects of the detector
         R :
-            This is the response matrix used to go from xini to bini
+            This is the response matrix of probabilities used to go from
+            xini to bini
         """
+        # Check that R is a matrix of probabilities
+        are_probabilities = np.logical_and(R >= 0, R <= 1).all()
+        if not are_probabilities:
+            raise ValueError("The R matrix should be a matrix of probabilities")
         # save the variables to use them later
         self.data = data
         self.statcov = statcov
