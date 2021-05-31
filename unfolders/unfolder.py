@@ -23,7 +23,9 @@ class Unfolder(object):
         # Check that R is a matrix of probabilities
         are_probabilities = np.logical_and(R >= 0, R <= 1).all()
         if not are_probabilities:
-            raise ValueError("The R matrix should be a matrix of probabilities")
+            print(
+                "WARNING: make sure R is a matrix of probabilities. Elements found outside the range [0,1]"
+            )
         # save the variables to use them later
         self.data = data
         self.statcov = statcov

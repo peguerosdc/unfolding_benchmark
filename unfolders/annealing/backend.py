@@ -215,7 +215,6 @@ class AnnealingBackend(Backend):
         # return the decoded solution
         result = self.get_annealer().solve(self.qubo_matrix)
         # Compute the error
-        print(f"Nbits: {self.n_bits} and weight: {self.lmbd}")
         unfolded_covariance = annealing_stats.covariance_matrix_of_result(
             R, self.lmbd, statcov
         )

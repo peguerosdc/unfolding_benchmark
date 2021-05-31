@@ -69,6 +69,7 @@ class SVDBackend(Backend):
         # Get the distribution of the d to cross check the regularization
         # - choose kreg to be the point where |d_i| stop being statistically significantly >>1
         ddist = tsvdunf.GetD()
+        self.kreg_distribution = root_numpy.hist2array(ddist)
         # Get the distribution of the singular values
         svdist = tsvdunf.GetSV()
         # Compute the error matrix for the unfolded spectrum using toy MC
