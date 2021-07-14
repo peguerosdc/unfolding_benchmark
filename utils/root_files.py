@@ -125,7 +125,7 @@ def compute_response_and_histograms(
     """
     # Source file
     chain = ROOT.TChain(source_tree_name)
-    chain.AddFile(source_file)
+    chain.Add(source_file)
 
     # Define the histograms metadata
     bins, rmin, rmax = histogram_metadata
