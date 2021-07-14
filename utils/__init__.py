@@ -5,4 +5,4 @@ from .root_files import (
     store_root_objects_in_file,
 )
 
-from .stats import compute_numpy_covariance_matrix
+from .stats import compute_numpy_covariance_matrix, transform_covariance_matrix
