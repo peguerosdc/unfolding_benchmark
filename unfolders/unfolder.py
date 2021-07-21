@@ -17,15 +17,9 @@ class Unfolder(object):
         bini :
             This is how xini looks like with the effects of the detector
         R :
-            This is the response matrix of probabilities used to go from
+            This is the response matrix of EVENTS used to go from
             xini to bini
         """
-        # Check that R is a matrix of probabilities
-        are_probabilities = np.logical_and(R >= 0, R <= 1).all()
-        if not are_probabilities:
-            print(
-                "WARNING: make sure R is a matrix of probabilities. Elements found outside the range [0,1]"
-            )
         # save the variables to use them later
         self.data = data
         self.statcov = statcov
