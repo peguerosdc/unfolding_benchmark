@@ -34,6 +34,7 @@ class AnnealingBackend(Backend):
         systematics=[],
         weight_systematics=0.0,
         syst_range=2.0,
+        rescale=False,
     ):
         """
         Creates an unfolder based on the minimization of a QUBO function
@@ -50,7 +51,12 @@ class AnnealingBackend(Backend):
             Weight to apply to the systematic penalties
         syst_range : float
             Systematics range in units of standard deviation
+        rescale : Boolean
+            True if the unknowns should be normalized, False otherwise.
         """
+        # Rescaling flag
+        self.rescale = rescale
+
         # Tikhonov regularization and its penalty weight
         self.D = []
         self.lmbd = weight_regularization
@@ -114,7 +120,7 @@ class AnnealingBackend(Backend):
         logger.debug(f"Alpha matrix = {self._encoder.alpha}")
         logger.debug(f"Beta matrix = \n{self._encoder.beta}")
 
-    def _make_qubo_matrix(self, data, xini, bini, R):
+    def _make_qubo_matrix(self, data, xini, R):
 
         nbins = xini.shape[0]
 
@@ -197,10 +203,29 @@ class AnnealingBackend(Backend):
         return Q
 
     def solve(self, data, statcov, xini, bini, R):
-        # validate the amount of bins in the truth distribution
-        n_bins_truth = xini.shape[0]
+        if self.rescale:
+            # In order to normalize the unknowns, we will use Aij as the matrix of events (Adetpy_events) which we already have. So now, we just need to rescale the equations to get a balanced system:
+            rescaled_data = np.copy(data)
+            rescaled_R = np.copy(R)
+            for i in range(len(statcov)):
+                error = statcov[i][i]
+                if error != 0:
+                    # Rescale b
+                    rescaled_data[i] /= np.sqrt(error)
+                    # Rescale A
+                    rescaled_R[i, :] /= np.sqrt(error)
+            # create a vector full of ones to encode
+            for_encoding = np.ones(shape=xini.shape)
+        else:
+            rescaled_data = data
+            rescaled_R = R
+            for_encoding = xini
+            # Transform the response matrix from events to probabilities
+            R_probabilities = np.where(xini > 0, np.divide(R, xini), 0)
+            rescaled_R = R_probabilities
         # if encoding is still a int number, change it to
         # an array of Nbits per bin
+        n_bins_truth = xini.shape[0]
         self.rho = (
             np.array([self.n_bits] * n_bins_truth)
             if isinstance(self.n_bits, int)
@@ -208,18 +233,23 @@ class AnnealingBackend(Backend):
         )
         # binary encoding
         self._encoder = BinaryEncoder(self.rho, auto_scaling=0.5)
-        self._encoder.auto_encode(xini)
+        self._encoder.auto_encode(for_encoding)
         self._add_systematics_to_problem()
         # make QUBO matrix
-        self.qubo_matrix = self._make_qubo_matrix(data, xini, bini, R)
+        self.qubo_matrix = self._make_qubo_matrix(
+            rescaled_data, for_encoding, rescaled_R
+        )
         # return the decoded solution
         result = self.get_annealer().solve(self.qubo_matrix)
+        unfolded = self._encoder.decode(result)
+        if self.rescale:
+            unfolded = np.multiply(unfolded, xini)
         # Compute the error
         unfolded_covariance = annealing_stats.covariance_matrix_of_result(
-            R, self.lmbd, statcov
+            rescaled_R, self.lmbd, statcov
         )
         error = np.sqrt(unfolded_covariance.diagonal())
-        return UnfoldingResult(self._encoder.decode(result), error)
+        return UnfoldingResult(unfolded, error)
 
     def get_annealer(self):
         raise NotImplementedError(
