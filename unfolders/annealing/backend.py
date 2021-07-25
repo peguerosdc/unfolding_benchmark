@@ -15,8 +15,12 @@ class QUBOSystematics:
 
     def __init__(self, h_syst: np.array, n_bits: int):
         """
-        :param h_syst:      systematic shifts wrt nominal
-        :param n_bits:      encoding
+        Parameters
+        ----------
+        h_syst :
+            systematic shifts wrt nominal
+        n_bits :
+            amount of bits to use when encoding
         """
         self.h_syst = h_syst
         self.n_bits = n_bits
@@ -37,6 +41,7 @@ class AnnealingBackend(Backend):
         rescale=False,
         encoder_scale=0.5,
         encoder_use_alpha=True,
+        use_stat_error=True,
     ):
         """
         Creates an unfolder based on the minimization of a QUBO function
@@ -59,7 +64,12 @@ class AnnealingBackend(Backend):
             Scaling value to use in the encoder
         encoder_use_alpha : Boolean
             True if the encoder should use the offset alpha to encode, False otherwise
+        use_stat_error : boolean
+            True if the error should be calculated based on the stdev of the n_times
+            iterations, False if Cowan's formula should be used
         """
+        # Simulation params
+        self.use_stat_error = use_stat_error
         # Rescaling flag
         self.rescale = rescale
         # Encoder value
@@ -250,16 +260,25 @@ class AnnealingBackend(Backend):
         self.qubo_matrix = self._make_qubo_matrix(
             rescaled_data, for_encoding, rescaled_R
         )
-        # return the decoded solution
-        result = self.get_annealer().solve(self.qubo_matrix)
-        unfolded = self._encoder.decode(result)
+        # solve statistically or using the best fit
+        raw_results = self.get_annealer().solve(self.qubo_matrix)
+        decoded_results = [self._encoder.decode(r) for r in raw_results]
+        if self.use_stat_error:
+            # get an average of all the solutions
+            unfolded = np.average(decoded_results, axis=0)
+            # Compute the error as the stdev
+            error = np.std(decoded_results, axis=0)
+        else:
+            # get the best fit as solution
+            unfolded = decoded_results[0]
+            # compute the error using Cowans formula
+            unfolded_covariance = annealing_stats.covariance_matrix_of_result(
+                rescaled_R, self.lmbd, statcov
+            )
+            error = np.sqrt(unfolded_covariance.diagonal())
+        # Rescale if additional rescaling was used
         if self.rescale:
             unfolded = np.multiply(unfolded, xini)
-        # Compute the error
-        unfolded_covariance = annealing_stats.covariance_matrix_of_result(
-            rescaled_R, self.lmbd, statcov
-        )
-        error = np.sqrt(unfolded_covariance.diagonal())
         return UnfoldingResult(unfolded, error)
 
     def get_annealer(self):

@@ -8,5 +8,4 @@ class SimulatedAnnealingBackend(AnnealingBackend):
         self.num_reads = num_reads
 
     def get_annealer(self):
-        print(f"num reads: {self.num_reads}")
         return SimulatedAnnealer(self.num_reads)
