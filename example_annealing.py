@@ -35,7 +35,7 @@ backend = SimulatedQuantumAnnealingBackend(4, 50, weight_regularization=1)
 # Turn Adetpy from number of events to probabilities (to use it with quantum annealing)
 
 # Perform unfolding
-unfolder = Unfolder(data, statcov, datatrue + 1, bini, R_probabilities)
+unfolder = Unfolder(data, statcov, datatrue + 1, bini, R)
 result = unfolder.unfold(backend)
 
 # Plot the result

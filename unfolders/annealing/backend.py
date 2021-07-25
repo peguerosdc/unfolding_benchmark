@@ -35,6 +35,8 @@ class AnnealingBackend(Backend):
         weight_systematics=0.0,
         syst_range=2.0,
         rescale=False,
+        encoder_scale=0.5,
+        encoder_use_alpha=True,
     ):
         """
         Creates an unfolder based on the minimization of a QUBO function
@@ -53,9 +55,16 @@ class AnnealingBackend(Backend):
             Systematics range in units of standard deviation
         rescale : Boolean
             True if the unknowns should be normalized, False otherwise.
+        encoder_scale : float
+            Scaling value to use in the encoder
+        encoder_use_alpha : Boolean
+            True if the encoder should use the offset alpha to encode, False otherwise
         """
         # Rescaling flag
         self.rescale = rescale
+        # Encoder value
+        self.encoder_scale = encoder_scale
+        self.encoder_use_alpha = encoder_use_alpha
 
         # Tikhonov regularization and its penalty weight
         self.D = []
@@ -232,7 +241,9 @@ class AnnealingBackend(Backend):
             else self.n_bits
         )
         # binary encoding
-        self._encoder = BinaryEncoder(self.rho, auto_scaling=0.5)
+        self._encoder = BinaryEncoder(
+            self.rho, auto_scaling=self.encoder_scale, use_alpha=self.encoder_use_alpha
+        )
         self._encoder.auto_encode(for_encoding)
         self._add_systematics_to_problem()
         # make QUBO matrix

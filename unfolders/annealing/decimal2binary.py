@@ -13,7 +13,7 @@ def laplacian(n):
 
 
 class BinaryEncoder(object):
-    def __init__(self, rho, auto_scaling, alpha=None, beta=None):
+    def __init__(self, rho, auto_scaling, alpha=None, beta=None, use_alpha=True):
         """
         Creates a decimal to binary encoder
 
@@ -25,12 +25,15 @@ class BinaryEncoder(object):
         beta : np.array
         rho : int or np.array
             Amount of bits to encode each bin/data element
+        use_alpha : Boolean
+            True if the offset alpha should be calculated
         """
         # Get the amount of bins
         self.alpha = alpha
         self.beta = beta
         self.rho = rho
         self.auto_scaling = auto_scaling
+        self.use_alpha = use_alpha
 
     def auto_encode(self, x):
         """
@@ -54,7 +57,8 @@ class BinaryEncoder(object):
             #    zeros = [0, 0, 0, 0, ...]
             # result in:
             #    alpha + beta.*zeros = alpha
-            self.alpha[i] = (1.0 - auto_range) * x[i]
+            if self.use_alpha:
+                self.alpha[i] = (1.0 - auto_range) * x[i]
             # w = 2 * auto_range*x[i] / float(n)
             # w is the width?
             w = 2 * auto_range * x[i] / np.power(2, n)
