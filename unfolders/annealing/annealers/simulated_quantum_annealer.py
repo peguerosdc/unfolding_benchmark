@@ -55,5 +55,6 @@ class SimulatedQuantumAnnealer(Annealer):
             ann.anneal_one_step(G, self.beta)
             G *= self.tau
         # retrieve the solutions
-        summary = sq.make_summary(ann)
-        return summary.xlist[0]
+        # summary = sq.make_summary(ann)
+        # return summary.xlist
+        return ann.get_x()

@@ -286,7 +286,7 @@ class AnnealingBackend(Backend):
             "This instance should be either a SimulatedAnnealing or SimulatedQuantumAnnealing"
         )
 
-    def compute_energy(self, x):
+    def compute_energy(self, x, R, expected):
         """
         Returns the energy of a given state x for this problem (without considering systematics)
         in the shape: (likelihood_energy, regularization_energy).
@@ -299,7 +299,9 @@ class AnnealingBackend(Backend):
         """
         print("WARNING: systematics are not considered (yet) in this calculation")
         logger.debug("Computing with the L2 norm: |Rx-d|² + lambda*|Dx|²")
+        # Transform the response matrix from events to probabilities
+        R_probabilities = np.where(expected > 0, np.divide(R, expected), 0)
         return (
-            np.linalg.norm(self.R.dot(x) - self.data) ** 2,
+            np.linalg.norm(R_probabilities.dot(x) - expected) ** 2,
             self.lmbd * np.linalg.norm(self.D.dot(x)) ** 2,
         )
