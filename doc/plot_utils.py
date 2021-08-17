@@ -1,5 +1,6 @@
 import matplotlib
 from matplotlib.ticker import ScalarFormatter
+import matplotlib.pyplot as plt
 
 # https://github.com/karthik/wesanderson
 colors = {
@@ -24,7 +25,7 @@ def setup():
     matplotlib.rcParams["font.sans-serif"] = ["TeX Gyre Pagella"]
     # set default colors
     cycle = [colors[k] for k in colors]
-    matplotlib.rcParams["axes.prop_cycle"] = matplotlib.cycler(color=cycle)
+    # matplotlib.rcParams["axes.prop_cycle"] = matplotlib.cycler(color=cycle)
     # set default imshow
     # https://matplotlib.org/stable/tutorials/colors/colormaps.html
     matplotlib.rcParams["image.cmap"] = "YlGnBu"
@@ -61,11 +62,45 @@ def get_sci_decimal_format():
     return yfmt
 
 
-def get_1x1_im_figure():
+def get_1x1_im_figure(size=None):
+    size = size if size else (10, 7)
     matplotlib.rc("axes", titlesize=18)  # fontsize of the axes title
     matplotlib.rc("axes", labelsize=18)  # fontsize of the x and y labels
     matplotlib.rc("xtick", labelsize=12)  # fontsize of the tick labels
     matplotlib.rc("ytick", labelsize=12)  # fontsize of the tick labels
     matplotlib.rc("legend", fontsize=18)  # legend fontsize
-    fig, ax = matplotlib.pylab.subplots(1, 1, figsize=(10, 7))
+    fig, ax = plt.subplots(1, 1, figsize=size)
+    return fig, ax
+
+
+def get_1x2_im_figure(size=None):
+    size = size if size else (18, 7)
+    matplotlib.rc("axes", titlesize=18)  # fontsize of the axes title
+    matplotlib.rc("axes", labelsize=18)  # fontsize of the x and y labels
+    matplotlib.rc("xtick", labelsize=12)  # fontsize of the tick labels
+    matplotlib.rc("ytick", labelsize=12)  # fontsize of the tick labels
+    matplotlib.rc("legend", fontsize=18)  # legend fontsize
+    fig, ax = plt.subplots(1, 2, figsize=size)
+    return fig, ax
+
+
+def get_1x3_im_figure(size=None):
+    size = size if size else (28, 7)
+    matplotlib.rc("axes", titlesize=18)  # fontsize of the axes title
+    matplotlib.rc("axes", labelsize=18)  # fontsize of the x and y labels
+    matplotlib.rc("xtick", labelsize=12)  # fontsize of the tick labels
+    matplotlib.rc("ytick", labelsize=12)  # fontsize of the tick labels
+    matplotlib.rc("legend", fontsize=18)  # legend fontsize
+    fig, ax = plt.subplots(1, 3, figsize=size)
+    return fig, ax
+
+
+def get_2x1_im_figure(size=None):
+    size = size if size else (7, 15)
+    matplotlib.rc("axes", titlesize=18)  # fontsize of the axes title
+    matplotlib.rc("axes", labelsize=18)  # fontsize of the x and y labels
+    matplotlib.rc("xtick", labelsize=12)  # fontsize of the tick labels
+    matplotlib.rc("ytick", labelsize=12)  # fontsize of the tick labels
+    matplotlib.rc("legend", fontsize=18)  # legend fontsize
+    fig, ax = plt.subplots(2, 1, figsize=size)
     return fig, ax
