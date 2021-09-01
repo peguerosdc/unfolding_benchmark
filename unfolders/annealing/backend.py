@@ -262,12 +262,12 @@ class AnnealingBackend(Backend):
         )
         # solve statistically or using the best fit
         raw_results = self.get_annealer().solve(self.qubo_matrix)
-        decoded_results = [self._encoder.decode(r) for r in raw_results]
+        decoded_results = np.array([self._encoder.decode(r) for r in raw_results])
         if self.use_stat_error:
             # get an average of all the solutions
             unfolded = np.average(decoded_results, axis=0)
             # Compute the error as the stdev
-            error = np.std(decoded_results, axis=0)
+            error = np.cov(decoded_results, rowvar=False)
         else:
             # get the best fit as solution
             unfolded = decoded_results[0]
@@ -275,7 +275,7 @@ class AnnealingBackend(Backend):
             unfolded_covariance = annealing_stats.covariance_matrix_of_result(
                 rescaled_R, self.lmbd, statcov
             )
-            error = np.sqrt(unfolded_covariance.diagonal())
+            error = unfolded_covariance  # np.sqrt(unfolded_covariance.diagonal())
         # Rescale if additional rescaling was used
         if self.rescale:
             unfolded = np.multiply(unfolded, xini)

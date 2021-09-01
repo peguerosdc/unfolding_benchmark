@@ -89,8 +89,7 @@ class SVDBackend(Backend):
         uinvcov = tsvdunf.GetXinv()
         # Convert result to a python array
         result = root_numpy.hist2array(unfres)
-        # Compute the error
-        error = []
-        for i in range(1, unfres.GetNbinsX() + 1):
-            error.append(math.sqrt(utaucov.GetBinContent(i, i)))
-        return UnfoldingResult(result, np.array(error))
+        error = root_numpy.hist2array(utaucov)
+        # the std to plot is just:
+        # np.sqrt(np.diagonal(error))
+        return UnfoldingResult(result, error)
