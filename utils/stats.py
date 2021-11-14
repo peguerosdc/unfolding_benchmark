@@ -46,10 +46,11 @@ def chi_square(observed, expected):
     from scipy import stats
 
     # glen cowan pp61
-    mychi = 0
-    for i, (n, nu) in enumerate(zip(observed, expected)):
+    temp = []
+    for (n, nu) in zip(observed, expected):
         if nu != 0:
-            mychi += ((n - nu) ** 2) / nu
+            temp += [((n - nu) ** 2) / nu]
     # compute p value
-    p = stats.chi2.sf(mychi, len(observed) - 1)
+    mychi = sum(temp)
+    p = stats.chi2.sf(mychi, len(temp))
     return mychi, p

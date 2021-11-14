@@ -62,7 +62,7 @@ def get_sci_decimal_format():
     return yfmt
 
 
-def get_1x1_im_figure(size=None):
+def get_1x1_im_figure(size=None, with_pull=False):
     size = size if size else (10, 7)
     matplotlib.rc("axes", titlesize=18)  # fontsize of the axes title
     matplotlib.rc("axes", labelsize=18)  # fontsize of the x and y labels
@@ -71,6 +71,19 @@ def get_1x1_im_figure(size=None):
     matplotlib.rc("legend", fontsize=18)  # legend fontsize
     fig, ax = plt.subplots(1, 1, figsize=size)
     return fig, ax
+
+
+def get_1x1_im_figure_with_pull(size=None):
+    size = size if size else (10, 10)
+    matplotlib.rc("axes", titlesize=18)  # fontsize of the axes title
+    matplotlib.rc("axes", labelsize=19)  # fontsize of the x and y labels
+    matplotlib.rc("xtick", labelsize=15)  # fontsize of the tick labels
+    matplotlib.rc("ytick", labelsize=14)  # fontsize of the tick labels
+    matplotlib.rc("legend", fontsize=20)  # legend fontsize
+    fig, axs = plt.subplots(
+        2, 1, figsize=(10, 10), gridspec_kw={"height_ratios": [8, 2]}
+    )
+    return fig, axs
 
 
 def get_1x2_im_figure(size=None):
